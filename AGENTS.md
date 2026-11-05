@@ -105,3 +105,12 @@ jobmatch-agent/
 - **Indicador de Aderência:** Explicável, nunca pontuação isolada (80–100: *Alta correspondência*, 60–79: *Correspondência moderada*, 0–59: *Baixa correspondência*).
 - **Badges de Status da Vaga:** `Nova`, `Analisada`, `Revisar`, `Currículo preparado`, `Em preparação`, `Enviada pelo usuário`, `Ignorada`, `Arquivada`.
 - **Acessibilidade:** Conformidade WCAG AA, navegação completa por teclado, contraste alto, foco visível e status comunicados por texto além de cor.
+
+## 6. Diretrizes de Qualidade e Pré-CI/CD
+Antes de concluir qualquer tarefa ou sugerir/executar commits, o agente DEVE rodar localmente a mesma tríade validada no GitHub Actions:
+
+1. **Lint:** `npm run lint --if-present` (sem warnings ou erros bloqueantes).
+2. **Testes Unitários:** `npm test -- --run` (100% das suítes passando em verde).
+3. **Build de Produção:** `npm run build` (garantindo compilação TypeScript limpa com `tsc -b` e bundle do Vite sem falhas).
+
+Nunca declare uma tarefa concluída ou suba alterações se qualquer um desses 3 passos falhar.

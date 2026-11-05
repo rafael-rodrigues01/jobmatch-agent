@@ -1,18 +1,19 @@
 # Contexto Ativo
 
 ## Foco Atual
-- Finalização da **Fase 1 (Fundação & Perfil do Candidato)** e preparação para a **Fase 2 (Vagas: Coleta, Normalização e Deduplicação)**.
+- Preparação para a **Fase 2 do PRD: Vagas (Coleta, Normalização e Deduplicação)** após conclusão e convergência de 100% da Fase 1 (Perfil do Candidato).
 
-## Últimas Ações Realizadas
-- Implementação completa da especificação técnica `specs/01-candidate-profile.md` em fluxo TDD rigoroso.
-- Criação dos schemas Pydantic v2, modelos ORM SQLAlchemy e repositório isolado em `backend/`.
-- Criação e validação dos endpoints RESTful (`GET`, `PUT`, `DELETE /api/v1/profile`) com 13 testes em Pytest.
-- Setup do frontend com React 19, Vite, TypeScript estrito, Tailwind CSS v4 e Vitest.
-- Criação dos componentes atômicos do Design System (`Button`, `Input`, `Badge`, `Card`) e da tela `ProfileSection` com 12 testes passando.
-- Documentação dos Changelogs em `backend/changelog.md` e `frontend/changelog.md`.
+## Estado do Repositório
+- **Módulo 001 (Candidate Profile)**: Totalmente convergido com a especificação, plano técnico e tarefas em `specs/001-candidate-profile/`.
+- **Tríade de Qualidade Pré-CI/CD**:
+  - Pytest: 13/13 testes passando.
+  - Vitest: 12/12 testes passando.
+  - TypeScript/Build: 0 erros, compilação de produção limpa.
 
 ## Próximos Passos Imediatos
-- Iniciar o planejamento da **Fase 2 do PRD (Vagas)**:
-  - Elaboração da especificação `specs/02-job-ingestion-dedup.md`.
-  - Mapeamento das regras de normalização de URLs e deduplicação (RF-05).
-  - Modelagem de dados para vagas (`Job`) e histórico de atividades (`ApplicationActivity`).
+1. Iniciar a nova especificação via comando:
+   ```text
+   /speckit-specify Descreva a funcionalidade de ingestão e normalização de vagas
+   ```
+2. Mapear os requisitos da Fase 2 (RF-04: Captura e Importação de Vagas, RF-05: Deduplicação e Identificação de Vagas, RF-10: Gestão do Funil e Status).
+3. Definir as entidades de banco de dados (`Job`, `JobSource`, `ApplicationActivity`) e endpoints da API de vagas.

@@ -1,0 +1,210 @@
+openapi: 3.0.3
+info:
+  title: JobMatch Agent - Candidate Profile API
+  version: 1.0.0
+  description: API REST para gerenciamento e persistência do perfil do candidato e do currículo-base.
+paths:
+  /api/v1/profile:
+    get:
+      summary: Obter perfil do candidato ativo
+      description: Retorna o perfil ativo existente ou estrutura inicial vazia para novo cadastro.
+      responses:
+        "200":
+          description: Perfil recuperado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+    put:
+      summary: Atualizar ou criar perfil do candidato
+      description: Atualiza de forma atômica os dados cadastrais, experiências, formações e competências do perfil.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Perfil atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "422":
+          description: Erro de validação de esquema ou consistência temporal
+    delete:
+      summary: Excluir perfil e dados correlacionados
+      description: Remove atomicamente em cascata todos os dados pessoais e profissionais do candidato local.
+      responses:
+        "204":
+          description: Dados do perfil excluídos com sucesso
+
+components:
+  schemas:
+    Experience:
+      type: object
+      required:
+        - company
+        - role
+        - start_date
+      properties:
+        id:
+          type: string
+          format: uuid
+        company:
+          type: string
+        role:
+          type: string
+        location:
+          type: string
+          nullable: true
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        is_current:
+          type: boolean
+          default: false
+        description:
+          type: string
+          nullable: true
+        skills_used:
+          type: array
+          items:
+            type: string
+        order_index:
+          type: integer
+          default: 0
+
+    Education:
+      type: object
+      required:
+        - institution
+        - degree
+        - field_of_study
+      properties:
+        id:
+          type: string
+          format: uuid
+        institution:
+          type: string
+        degree:
+          type: string
+        field_of_study:
+          type: string
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        order_index:
+          type: integer
+          default: 0
+
+    Skill:
+      type: object
+      required:
+        - name
+        - category
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+          enum: [TECHNICAL, SOFT_SKILL, LANGUAGE]
+        proficiency_level:
+          type: string
+          enum: [BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, FLUENT]
+          nullable: true
+        evidence:
+          type: string
+          nullable: true
+
+    ProfileUpdate:
+      type: object
+      required:
+        - full_name
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+        headline:
+          type: string
+          nullable: true
+        summary:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        linkedin_url:
+          type: string
+          format: uri
+          nullable: true
+        github_url:
+          type: string
+          format: uri
+          nullable: true
+        portfolio_url:
+          type: string
+          format: uri
+          nullable: true
+        target_roles:
+          type: array
+          items:
+            type: string
+        work_modes:
+          type: array
+          items:
+            type: string
+        base_resume_raw:
+          type: string
+          nullable: true
+        experiences:
+          type: array
+          items:
+            $ref: "#/components/schemas/Experience"
+        educations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Education"
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Skill"
+
+    ProfileResponse:
+      allOf:
+        - $ref: "#/components/schemas/ProfileUpdate"
+        - type: object
+          required:
+            - id
+            - created_at
+            - updated_at
+          properties:
+            id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time

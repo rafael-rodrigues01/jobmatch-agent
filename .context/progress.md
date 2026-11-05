@@ -7,6 +7,7 @@
   - **Frontend (Vitest + RTL)**: 12 testes passando (100% verde) cobrindo componentes atômicos (`Button`, `Input`, `Badge`, `Card`) e a tela `ProfileSection`.
   - **Build de Produção**: `tsc -b` executado sem erros com tipagem estrita (zero `any`) e bundle do Vite compilado com sucesso.
   - **Governança & Integridade**: Regras de *Zero Alucinação* e *Human-in-the-Loop* integralmente atendidas; exclusão definitiva em cascata funcional.
+  - **CI Pipeline**: GitHub Actions configurado e validado em paralelo para Frontend (Node 20) e Backend (Python 3.11).
 
 ## Próximas Especificações (Roadmap PRD)
 - [ ] **002 - Coleta, Normalização e Deduplicação de Vagas** (Fase 2 do PRD: RF-04, RF-05, RF-10)

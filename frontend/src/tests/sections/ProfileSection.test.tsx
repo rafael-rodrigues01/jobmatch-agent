@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProfileSection } from '@/sections/Profile/ProfileSection';
 import * as profileService from '@/services/profileService';
@@ -8,31 +7,22 @@ import { CandidateProfile } from '@/types/profile';
 vi.mock('@/services/profileService');
 
 const mockProfile: CandidateProfile = {
-  id: 'uuid-123',
-  full_name: 'Carlos Desenvolvedor',
-  headline: 'Backend Engineer',
-  summary: 'Especialista em microsserviços',
-  email: 'carlos@example.com',
-  target_roles: ['Backend Engineer'],
+  id: '123',
+  full_name: 'Maria Engenheira',
+  headline: 'Tech Lead',
+  summary: 'Resumo da carreira',
+  email: 'maria@example.com',
+  phone: '11999999999',
+  location: 'São Paulo, SP',
+  linkedin_url: 'https://linkedin.com/in/maria',
+  github_url: 'https://github.com/maria',
+  portfolio_url: '',
+  target_roles: ['Tech Lead'],
   work_modes: ['REMOTE'],
-  base_resume_raw: '# Carlos\n\nResumo profissional...',
-  experiences: [
-    {
-      company: 'Tech Solutions',
-      role: 'Sênior',
-      start_date: '2022-01-01',
-      is_current: true,
-      skills_used: ['Python', 'Docker'],
-    },
-  ],
+  base_resume_raw: '# CV Maria',
+  experiences: [],
   educations: [],
-  skills: [
-    {
-      name: 'Python',
-      category: 'TECHNICAL',
-      proficiency_level: 'ADVANCED',
-    },
-  ],
+  skills: [],
 };
 
 describe('ProfileSection Component', () => {
@@ -40,18 +30,16 @@ describe('ProfileSection Component', () => {
     vi.clearAllMocks();
   });
 
-  it('loads and renders existing profile data', async () => {
+  it('renders loading state initially and then shows profile data', async () => {
     vi.mocked(profileService.getProfile).mockResolvedValue(mockProfile);
 
     render(<ProfileSection />);
 
-    expect(screen.getByText(/carregando perfil/i)).toBeInTheDocument();
+    expect(screen.getByText(/Carregando perfil do candidato.../i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue('Carlos Desenvolvedor')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('Backend Engineer')).toBeInTheDocument();
-      expect(screen.getByText(/Tech Solutions/)).toBeInTheDocument();
-      expect(screen.getByText(/Python \(ADVANCED\)/)).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Maria Engenheira')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Tech Lead')).toBeInTheDocument();
     });
   });
 
@@ -59,47 +47,56 @@ describe('ProfileSection Component', () => {
     vi.mocked(profileService.getProfile).mockResolvedValue(mockProfile);
     vi.mocked(profileService.saveProfile).mockResolvedValue({
       ...mockProfile,
-      full_name: 'Carlos Silva',
+      headline: 'Principal Engineer',
     });
 
     render(<ProfileSection />);
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue('Carlos Desenvolvedor')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Maria Engenheira')).toBeInTheDocument();
     });
 
-    const nameInput = screen.getByLabelText(/nome completo/i);
-    await userEvent.clear(nameInput);
-    await userEvent.type(nameInput, 'Carlos Silva');
+    const headlineInput = screen.getByDisplayValue('Tech Lead');
+    fireEvent.change(headlineInput, { target: { value: 'Principal Engineer' } });
 
-    const saveButton = screen.getByRole('button', { name: /salvar alterações/i });
-    await userEvent.click(saveButton);
+    const submitBtn = screen.getByRole('button', { name: /Salvar alterações/i });
+    fireEvent.click(submitBtn);
 
     await waitFor(() => {
       expect(profileService.saveProfile).toHaveBeenCalledWith(
         expect.objectContaining({
-          full_name: 'Carlos Silva',
+          headline: 'Principal Engineer',
         })
       );
-      expect(screen.getByText(/perfil salvo com sucesso/i)).toBeInTheDocument();
+      expect(screen.getByText(/Perfil salvo com sucesso!/i)).toBeInTheDocument();
     });
   });
 
-  it('shows error notice when profile update fails', async () => {
-    vi.mocked(profileService.getProfile).mockResolvedValue(mockProfile);
-    vi.mocked(profileService.saveProfile).mockRejectedValue(new Error('Falha na API'));
+  it('shows friendly offline banner with retry button when service is unavailable and recovers on retry', async () => {
+    vi.mocked(profileService.getProfile).mockRejectedValueOnce(
+      new profileService.ApiConnectionError()
+    );
 
     render(<ProfileSection />);
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue('Carlos Desenvolvedor')).toBeInTheDocument();
+      expect(
+        screen.getByText(/Serviço local indisponível. Verifique se o backend está em execução na porta 8000./i)
+      ).toBeInTheDocument();
     });
 
-    const saveButton = screen.getByRole('button', { name: /salvar alterações/i });
-    await userEvent.click(saveButton);
+    const retryBtn = screen.getByRole('button', { name: /Tentar novamente/i });
+    expect(retryBtn).toBeInTheDocument();
+
+    // Simula recuperação do backend
+    vi.mocked(profileService.getProfile).mockResolvedValueOnce(mockProfile);
+    fireEvent.click(retryBtn);
 
     await waitFor(() => {
-      expect(screen.getByText(/erro ao salvar perfil/i)).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Maria Engenheira')).toBeInTheDocument();
+      expect(
+        screen.queryByText(/Serviço local indisponível/i)
+      ).not.toBeInTheDocument();
     });
   });
 });

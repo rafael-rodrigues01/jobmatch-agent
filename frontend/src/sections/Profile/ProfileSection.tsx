@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { CandidateProfile, WorkMode } from '@/types/profile';
-import { getProfile, saveProfile } from '@/services/profileService';
+import { getProfile, saveProfile, ApiConnectionError } from '@/services/profileService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
@@ -28,30 +28,42 @@ export const ProfileSection: React.FC = () => {
   const [profile, setProfile] = useState<CandidateProfile>(defaultEmptyProfile);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const [isOffline, setIsOffline] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'warning';
     text: string;
   } | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        const data = await getProfile();
-        if (data) {
-          setProfile(data);
-        }
-      } catch (err) {
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setStatusMessage(null);
+      setIsOffline(false);
+      const data = await getProfile();
+      if (data) {
+        setProfile(data);
+      }
+    } catch (err) {
+      if (err instanceof ApiConnectionError) {
+        setIsOffline(true);
+        setStatusMessage({
+          type: 'warning',
+          text: 'Serviço local indisponível. Verifique se o backend está em execução na porta 8000.',
+        });
+      } else {
         setStatusMessage({
           type: 'error',
           text: 'Não foi possível carregar os dados do perfil.',
         });
-      } finally {
-        setLoading(false);
       }
+    } finally {
+      setLoading(false);
     }
-    loadData();
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleChange = (
     field: keyof CandidateProfile,
@@ -67,15 +79,24 @@ export const ProfileSection: React.FC = () => {
       setStatusMessage(null);
       const saved = await saveProfile(profile);
       setProfile(saved);
+      setIsOffline(false);
       setStatusMessage({
         type: 'success',
         text: 'Perfil salvo com sucesso!',
       });
     } catch (err) {
-      setStatusMessage({
-        type: 'error',
-        text: 'Erro ao salvar perfil. Tente novamente.',
-      });
+      if (err instanceof ApiConnectionError) {
+        setIsOffline(true);
+        setStatusMessage({
+          type: 'warning',
+          text: 'Serviço local offline. Seus dados permanecem seguros neste formulário.',
+        });
+      } else {
+        setStatusMessage({
+          type: 'error',
+          text: 'Erro ao salvar perfil. Tente novamente.',
+        });
+      }
     } finally {
       setSaving(false);
     }
@@ -106,13 +127,27 @@ export const ProfileSection: React.FC = () => {
       {statusMessage && (
         <div
           role="alert"
-          className={`p-3.5 rounded-[10px] text-sm border ${
+          className={`p-4 rounded-[10px] text-sm border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
             statusMessage.type === 'success'
               ? 'bg-[#46C99A]/10 border-[#46C99A]/30 text-[#46C99A]'
+              : statusMessage.type === 'warning'
+              ? 'bg-[#F2B85B]/10 border-[#F2B85B]/30 text-[#F2B85B]'
               : 'bg-[#FF727F]/10 border-[#FF727F]/30 text-[#FF727F]'
           }`}
         >
-          {statusMessage.text}
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{statusMessage.text}</span>
+          </div>
+          {isOffline && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={loadData}
+              className="text-xs px-3 py-1.5 self-start sm:self-auto"
+            >
+              Tentar novamente
+            </Button>
+          )}
         </div>
       )}
 

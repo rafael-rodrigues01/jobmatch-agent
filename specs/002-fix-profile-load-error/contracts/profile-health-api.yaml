@@ -1,0 +1,42 @@
+openapi: 3.0.3
+info:
+  title: JobMatch Agent Profile API - Error & Health Contract
+  version: 1.1.0
+  description: Contrato de respostas e tratamento de erro de conexão para o Perfil
+paths:
+  /health:
+    get:
+      summary: Health check da API
+      responses:
+        '200':
+          description: Serviço ativo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  database:
+                    type: string
+                    example: "postgresql" # ou "sqlite-fallback"
+  /api/v1/profile:
+    get:
+      summary: Buscar perfil do candidato
+      responses:
+        '200':
+          description: Perfil retornado com sucesso
+        '404':
+          description: Perfil ainda não cadastrado (retorna null no frontend)
+        '500':
+          description: Erro interno de persistência
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Erro interno no serviço de dados"
+
